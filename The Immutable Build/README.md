@@ -86,13 +86,12 @@ components:
           type: string
         slotStart:
           type: string
-          format: date-time
+          format: string
         slotEnd:
           type: string
-          format: date-time
+          format: string
         channel:
           type: string
-          enum: [VIRTUAL, IN_PERSON]
 ```
 
 ## Step 2 - Run Build (Expected Failure)
