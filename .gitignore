@@ -1,0 +1,3 @@
+Sample Project/backend/.venv/*
+**/__pycache__/*
+Sample Project/frontend/node_modules/*
