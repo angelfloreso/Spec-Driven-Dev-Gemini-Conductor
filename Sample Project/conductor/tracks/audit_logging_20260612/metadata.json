@@ -1,8 +1,0 @@
-{
-  "track_id": "audit_logging_20260612",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-06-12T17:14:07Z",
-  "updated_at": "2026-06-12T17:14:07Z",
-  "description": "Implement Detailed Audit Logging"
-}

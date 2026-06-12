@@ -14,6 +14,12 @@ otherwise, simply run:
 ./run.sh 
 ```
 
+## Kill the Backend and Frontend processes:
+
+```
+./kill.sh
+```
+
 ## Demo users:
 
 | Username | Password |
