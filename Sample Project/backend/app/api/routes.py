@@ -67,56 +67,157 @@ def bootstrap_auth(db: Session = Depends(get_db)):
     if db.query(User).count() > 0:
         return {"status": "already_bootstrapped"}
 
-    if db.query(Specialty).count() == 0:
-        cardio = Specialty(name="Cardiology")
-        derm = Specialty(name="Dermatology")
-        db.add_all([cardio, derm])
-        db.flush()
+    specialty_by_name: dict[str, Specialty] = {
+        s.name: s for s in db.query(Specialty).all()
+    }
+    specialty_names = [
+        "Cardiology",
+        "Dermatology",
+        "Pediatrics",
+        "Orthopedics",
+        "Neurology",
+    ]
+    for name in specialty_names:
+        if name not in specialty_by_name:
+            specialty = Specialty(name=name)
+            db.add(specialty)
+            db.flush()
+            specialty_by_name[name] = specialty
 
-        dr1 = Practitioner(full_name="Dr. Maya Levin", email="maya.levin@medsched.local", specialty_id=cardio.id)
-        dr2 = Practitioner(full_name="Dr. Nikhil Rao", email="nikhil.rao@medsched.local", specialty_id=derm.id)
-        db.add_all([dr1, dr2])
-        db.flush()
-
-        for weekday in [0, 1, 2, 3, 4]:
-            db.add(
-                PractitionerShift(
-                    practitioner_id=dr1.id,
-                    weekday=weekday,
-                    start_time=datetime.strptime("09:00", "%H:%M").time(),
-                    end_time=datetime.strptime("17:00", "%H:%M").time(),
-                )
+    practitioner_seed = [
+        ("Dr. Maya Levin", "maya.levin@medschedclinic.com", "Cardiology", "09:00", "17:00"),
+        ("Dr. Nikhil Rao", "nikhil.rao@medschedclinic.com", "Dermatology", "10:00", "18:00"),
+        ("Dr. Sofia Kim", "sofia.kim@medschedclinic.com", "Pediatrics", "08:00", "16:00"),
+        ("Dr. Ethan Brooks", "ethan.brooks@medschedclinic.com", "Orthopedics", "11:00", "19:00"),
+        ("Dr. Lina Haddad", "lina.haddad@medschedclinic.com", "Neurology", "09:30", "17:30"),
+    ]
+    practitioner_by_email: dict[str, Practitioner] = {
+        p.email: p for p in db.query(Practitioner).all()
+    }
+    for full_name, email, specialty_name, start_at, end_at in practitioner_seed:
+        practitioner = practitioner_by_email.get(email)
+        if not practitioner:
+            practitioner = Practitioner(
+                full_name=full_name,
+                email=email,
+                specialty_id=specialty_by_name[specialty_name].id,
             )
-            db.add(
-                PractitionerShift(
-                    practitioner_id=dr2.id,
-                    weekday=weekday,
-                    start_time=datetime.strptime("10:00", "%H:%M").time(),
-                    end_time=datetime.strptime("18:00", "%H:%M").time(),
+            db.add(practitioner)
+            db.flush()
+            practitioner_by_email[email] = practitioner
+
+        has_shift = db.query(PractitionerShift).filter(PractitionerShift.practitioner_id == practitioner.id).first()
+        if not has_shift:
+            for weekday in [0, 1, 2, 3, 4]:
+                db.add(
+                    PractitionerShift(
+                        practitioner_id=practitioner.id,
+                        weekday=weekday,
+                        start_time=datetime.strptime(start_at, "%H:%M").time(),
+                        end_time=datetime.strptime(end_at, "%H:%M").time(),
+                    )
                 )
+
+    patient_seed = [
+        {
+            "full_name": "Alina Torres",
+            "date_of_birth": "1992-09-14",
+            "biological_sex": "Female",
+            "phone_number": "+1-555-111-9034",
+            "email": "alina.patient@medschedclinic.com",
+            "known_allergies": "Penicillin",
+            "government_id": "PAT-0001",
+        },
+        {
+            "full_name": "Marcus Hale",
+            "date_of_birth": "1984-02-19",
+            "biological_sex": "Male",
+            "phone_number": "+1-555-111-9035",
+            "email": "marcus.hale@medschedclinic.com",
+            "known_allergies": "None",
+            "government_id": "PAT-0002",
+        },
+        {
+            "full_name": "Priya Nanda",
+            "date_of_birth": "1997-07-03",
+            "biological_sex": "Female",
+            "phone_number": "+1-555-111-9036",
+            "email": "priya.nanda@medschedclinic.com",
+            "known_allergies": "Latex",
+            "government_id": "PAT-0003",
+        },
+        {
+            "full_name": "Jonas Reed",
+            "date_of_birth": "1975-11-28",
+            "biological_sex": "Male",
+            "phone_number": "+1-555-111-9037",
+            "email": "jonas.reed@medschedclinic.com",
+            "known_allergies": "Peanuts",
+            "government_id": "PAT-0004",
+        },
+        {
+            "full_name": "Camila Ortega",
+            "date_of_birth": "2001-05-11",
+            "biological_sex": "Female",
+            "phone_number": "+1-555-111-9038",
+            "email": "camila.ortega@medschedclinic.com",
+            "known_allergies": "Sulfa drugs",
+            "government_id": "PAT-0005",
+        },
+    ]
+    patient_by_email: dict[str, Patient] = {p.email: p for p in db.query(Patient).all()}
+    for seed in patient_seed:
+        if seed["email"] not in patient_by_email:
+            patient = Patient(
+                full_name=seed["full_name"],
+                date_of_birth=datetime.strptime(seed["date_of_birth"], "%Y-%m-%d").date(),
+                biological_sex=seed["biological_sex"],
+                phone_number=seed["phone_number"],
+                email=seed["email"],
+                known_allergies=seed["known_allergies"],
+                government_id=seed["government_id"],
             )
+            db.add(patient)
+            db.flush()
+            patient_by_email[seed["email"]] = patient
 
-    patient = (
-        db.query(Patient)
-        .filter(Patient.email == "alina.patient@medsched.local")
-        .first()
-    )
-    if not patient:
-        patient = Patient(
-            full_name="Alina Torres",
-            date_of_birth=datetime.strptime("1992-09-14", "%Y-%m-%d").date(),
-            biological_sex="Female",
-            phone_number="+1-555-111-9034",
-            email="alina.patient@medsched.local",
-            known_allergies="Penicillin",
-            government_id="PAT-0001",
-        )
-        db.add(patient)
-        db.flush()
+    patient = patient_by_email["alina.patient@medschedclinic.com"]
 
-    practitioner = db.query(Practitioner).filter(Practitioner.email == "maya.levin@medsched.local").first()
+    practitioner = practitioner_by_email.get("maya.levin@medschedclinic.com")
     if not practitioner:
         practitioner = db.query(Practitioner).first()
+
+    if db.query(Appointment).count() == 0:
+        now = datetime.utcnow().replace(second=0, microsecond=0)
+        appointment_seed = [
+            ("alina.patient@medschedclinic.com", "maya.levin@medschedclinic.com", 1, 9, 30, AppointmentStatus.pending, "patient", "Initial heart health check"),
+            ("marcus.hale@medschedclinic.com", "nikhil.rao@medschedclinic.com", 1, 11, 30, AppointmentStatus.waiting_room, "receptionist", "Persistent rash follow-up"),
+            ("priya.nanda@medschedclinic.com", "sofia.kim@medschedclinic.com", 2, 10, 20, AppointmentStatus.pending, "patient", "Seasonal flu symptoms"),
+            ("jonas.reed@medschedclinic.com", "ethan.brooks@medschedclinic.com", -2, 14, 45, AppointmentStatus.completed, "receptionist", "Knee pain reassessment"),
+            ("camila.ortega@medschedclinic.com", "lina.haddad@medschedclinic.com", 3, 15, 40, AppointmentStatus.pending, "patient", "Recurring migraine consult"),
+            ("marcus.hale@medschedclinic.com", "maya.levin@medschedclinic.com", -1, 16, 30, AppointmentStatus.no_show, "receptionist", "Missed blood pressure review"),
+        ]
+
+        for patient_email, practitioner_email, day_offset, hour, duration_minutes, status_value, created_by, notes in appointment_seed:
+            patient_record = patient_by_email.get(patient_email)
+            practitioner_record = practitioner_by_email.get(practitioner_email)
+            if not patient_record or not practitioner_record:
+                continue
+
+            start_datetime = (now + timedelta(days=day_offset)).replace(hour=hour, minute=0)
+            end_datetime = start_datetime + timedelta(minutes=duration_minutes)
+            db.add(
+                Appointment(
+                    patient_id=patient_record.id,
+                    practitioner_id=practitioner_record.id,
+                    specialty_id=practitioner_record.specialty_id,
+                    start_datetime=start_datetime,
+                    end_datetime=end_datetime,
+                    status=status_value,
+                    created_by=created_by,
+                    notes=notes,
+                )
+            )
 
     users = [
         User(username="admin", hashed_password=hash_password("admin123"), role=UserRole.admin),
@@ -550,8 +651,8 @@ def seed_baseline(
         db.add_all([cardio, derm])
         db.flush()
 
-        dr1 = Practitioner(full_name="Dr. Maya Levin", email="maya.levin@medsched.local", specialty_id=cardio.id)
-        dr2 = Practitioner(full_name="Dr. Nikhil Rao", email="nikhil.rao@medsched.local", specialty_id=derm.id)
+        dr1 = Practitioner(full_name="Dr. Maya Levin", email="maya.levin@medschedclinic.com", specialty_id=cardio.id)
+        dr2 = Practitioner(full_name="Dr. Nikhil Rao", email="nikhil.rao@medschedclinic.com", specialty_id=derm.id)
         db.add_all([dr1, dr2])
         db.flush()
 
