@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Immutable Build Scheduling API
+  version: 1.0.0
+  description: |
+    This is intentionally an outdated contract for the workshop.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: appointments
+paths:
+  /api/appointments/next:
+    get:
+      tags:
+        - appointments
+      operationId: getNextAppointment
+      summary: Get the next appointment for a patient
+      parameters:
+        - in: query
+          name: patientId
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Next appointment payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextAppointmentResponse'
+components:
+  schemas:
+    NextAppointmentResponse:
+      type: object
+      required:
+        - patientId
+        - practitioner
+        - appointmentDate
+      properties:
+        patientId:
+          type: integer
+          format: int32
+        practitioner:
+          type: string
+        appointmentDate:
+          type: string
+          format: date
