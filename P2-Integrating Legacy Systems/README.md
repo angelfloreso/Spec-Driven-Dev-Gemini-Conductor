@@ -190,8 +190,8 @@ Update `SchedulingController` to add v2 endpoint:
 public class SchedulingController {
 
     // V1 - Legacy (unchanged)
-    @GetMapping("/v1/appointments/{appointmentId}")
-    public ResponseEntity<Appointment> getAppointmentV1(@PathVariable String appointmentId) {
+    @GetMapping("/v1/appointments/{id}")
+    public ResponseEntity<Appointment> getAppointmentV1(@PathVariable("id") String appointmentId) {
         Appointment appointment = new Appointment(
                 appointmentId,
                 "Dr. Smith",
