@@ -1,37 +1,54 @@
-# P2 - Integrating Legacy Systems with Consumer-Driven Contracts
+# P2 - Integrating Legacy Systems: Spec-Driven Development in Practice
 
-A hands-on workshop demonstrating **Consumer-Driven Contracts (CDC)** for safely managing breaking changes when integrating with legacy APIs.
+This workshop extends the Spec-Driven Development principle into legacy system integration using **Consumer-Driven Contracts (CDC)**.
+
+In P1 you saw how an OpenAPI spec is the source of truth for a single service — the build generates code from the spec and rejects anything that drifts. Here the same idea scales across a **team boundary**: the consumer writes a machine-readable spec (a contract) of what it needs, and the producer's build must satisfy it before any code ships.
 
 ## The Problem
 
-When integrating with a legacy API provider, you face risks:
+Legacy system integration without shared specs leads to:
 
-- **Breaking changes**: Provider updates API without warning
-- **Silent failures**: Code compiles, but fails at runtime after deployment  
-- **Coordination hell**: Consumer and provider teams disagree on what to change first
-- **Lost time**: Debugging production failures that could have been caught earlier
+- **Breaking changes**: Provider updates API without warning — no spec to enforce backward compatibility
+- **Silent failures**: Code compiles fine but crashes at runtime after deployment
+- **Coordination hell**: Consumer and provider teams argue over who breaks what, with no source of truth
+- **Lost time**: Debugging production failures that could have been caught at build time
 
-## The Solution: Consumer-Driven Contracts
+## The Spec-Driven Solution: Consumer-Driven Contracts
 
-**CDC shifts the paradigm**: Instead of the consumer adapting to whatever the producer provides, the consumer defines a **contract** (expectations) that the producer **must** satisfy.
+**CDC is Spec-Driven Development at the integration layer.** The consumer defines an explicit spec (the contract — what fields, types, and behaviours it depends on). The producer's build runs those specs as tests and fails if anything violates them.
+
+> Spec → Code, not Code → Spec.
+> If the spec changes, the build tells you immediately. Not production.
 
 If the producer breaks the contract, the build fails **before** deployment.
 
-## Architecture
+## How It Fits Into Spec-Driven Development
 
 ```
-┌─────────────────┐         ┌──────────────────┐
-│   CONSUMER      │         │    PRODUCER      │
-│   (Client App)  │◄────────┤ (Legacy API)     │
-└─────────────────┘         └──────────────────┘
-        │                           │
-        │                           │
-     Defines              Validates Against
-     Contract             Contract
-        │                           │
-        ▼                           ▼
-  SchedulingClient         ProducerContractTest
-  (expects v1 API)        (verifies v1 response)
+  Spec-Driven Development Principle
+  ──────────────────────────────────
+  Write the spec first → Generate / validate code from it
+  Never let implementation drift from the spec
+
+  P1 recap (single service):
+    OpenAPI YAML  ──►  Generated Spring interfaces  ──►  Controller must implement them
+
+  P2 (across a team boundary):
+    Consumer Contract  ──►  Producer build verifies against it  ──►  Build fails on drift
+
+┌──────────────────────────┐         ┌──────────────────────────┐
+│  CONSUMER (Client App)   │         │  PRODUCER (Legacy API)   │
+│                          │◄────────┤                          │
+│  SchedulingClient        │  HTTP   │  SchedulingController    │
+│  (calls /api/v1/...)     │         │  (serves /api/v1/...)    │
+└──────────────────────────┘         └──────────────────────────┘
+           │                                      │
+  Writes contract spec              Runs contract as build test
+  (AppointmentContractTest)         (ProducerContractTest)
+           │                                      │
+           └─────────── shared expectation ───────┘
+                   "appointmentId, practitionerName,
+                    startTime must be present"
 ```
 
 ## Quick Start
@@ -50,10 +67,10 @@ BUILD SUCCESS ✓
 ```
 
 **What this demonstrates**:
-- **Producer Contract Test** (`ProducerContractTest`): Validates that the producer API satisfies the consumer's contract expectations
-- **Consumer Contract Tests** (`AppointmentContractTest`): Documents what fields the consumer expects from the producer
+- **Producer Contract Test** (`ProducerContractTest`): Validates the producer satisfies the contract spec — same role as the OpenAPI contract test in P1
+- **Consumer Contract Tests** (`AppointmentContractTest`): The spec written from the consumer's perspective — documents required fields as executable expectations
 
-Both producer and consumer satisfy the v1 contract.
+Both sides honour the v1 contract spec. The build is green.
 
 ---
 
@@ -299,7 +316,20 @@ Expected result: **BUILD FAILURE** ❌ (contract test catches it)
 
 ## Key Takeaways
 
-| Aspect | Without CDC | With CDC |
+### Spec-Driven Development — the common thread across P1 and P2
+
+| | P1 - Immutable Build | P2 - Legacy Integration |
+|---|---|---|
+| **Spec format** | OpenAPI YAML | Consumer Contract (test) |
+| **Who writes the spec** | API designer | Consumer team |
+| **Where spec lives** | `src/main/resources/openapi/` | `*ContractTest.java` |
+| **Build enforces it** | Generated interfaces must be implemented | Producer test must satisfy contract |
+| **Drift caught at** | Compile time | Test time |
+| **Key rule** | Change spec first, code follows | Consumer spec wins; producer adapts |
+
+### CDC comparison table
+
+| Aspect | Without CDC | With CDC (Spec-Driven) |
 |--------|------------|---------|
 | **Breaking change detected** | Runtime (production outage) | Build time (before deployment) |
 | **Field rename** | Silent failures | Test fails; prevents deployment |
@@ -391,8 +421,13 @@ Imagine you're splitting a monolith into microservices. The existing monolith is
 
 ## Summary
 
-Consumer-Driven Contracts are a defensive strategy against integration failures. By letting the consumer define what it needs and having the producer verify it can provide that, you catch breaking changes at build time instead of runtime.
+Spec-Driven Development doesn't stop at a single service. Consumer-Driven Contracts carry the same principle across team boundaries:
 
-This is especially valuable for legacy system integration where change coordination is difficult and the cost of downtime is high.
+1. **Spec is written first** — the consumer contract defines what the integration must look like
+2. **Build enforces the spec** — the producer cannot ship code that violates it
+3. **Versioning is explicit** — v1 contract stays alive until all consumers migrate; v2 contract is added alongside it
+4. **Drift is impossible** — any manual change that breaks the contract is caught by `mvn clean install`, not by a production alert
 
-**Remember**: "Fail fast, fail early, fail before production." – CDC Philosophy
+This is the same "immutable build" guarantee from P1, now applied across service boundaries.
+
+**Remember**: "The spec is the contract. The build is the referee." – Spec-Driven Development
