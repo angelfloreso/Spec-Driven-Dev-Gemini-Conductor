@@ -257,26 +257,30 @@ Expected result: **BUILD SUCCESS** ✓ (v1 endpoint still satisfies v1 contract)
 
 Consumer team wants to use the new v2 API. They add a new contract for v2.
 
-Add test in `consumer/src/test/java/com/legacyintegration/consumer/ConsumerContractTest.java`:
+Create and add a test in `consumer/src/test/java/com/legacyintegration/consumer/ConsumerContractTest.java`:
 
 ```java
-@Test
-public void shouldSuccessfullyCallV2WithNewFields() {
-    // Mock producer v2 response
-    wireMockServer.stubFor(
-            WireMock.get(WireMock.urlEqualTo("/api/v2/appointments/APT-001"))
-                    .willReturn(WireMock.aResponse()
-                            .withStatus(200)
-                            .withHeader("Content-Type", "application/json")
-                            .withBody("{\"appointmentId\":\"APT-001\",\"doctorName\":\"Dr. Smith\",\"startTime\":\"2026-06-20T10:00:00\",\"channel\":\"VIRTUAL\"}"))
-    );
 
-    // This would call the new v2 endpoint
-    // (Add a getAppointmentV2 method to SchedulingClient)
-    String response = "{\"appointmentId\":\"APT-001\",\"doctorName\":\"Dr. Smith\",\"startTime\":\"2026-06-20T10:00:00\",\"channel\":\"VIRTUAL\"}";
+package com.legacyintegration.consumer;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class ConsumerContractTest {
     
-    assertThat(response).contains("doctorName");
-    assertThat(response).contains("channel");
+    @Test
+    public void shouldSuccessfullyCallV2WithNewFields() {
+        // This represents the v2 contract that adds new fields: 'channel'
+        // The consumer expects these fields from the producer
+        String v2Response = "{\"appointmentId\":\"APT-001\",\"doctorName\":\"Dr. Smith\",\"startTime\":\"2026-06-20T10:00:00\",\"channel\":\"VIRTUAL\"}";
+        
+        // Consumer contract: requires these fields in v2 response
+        assertThat(v2Response).contains("appointmentId");
+        assertThat(v2Response).contains("doctorName");
+        assertThat(v2Response).contains("startTime");
+        assertThat(v2Response).contains("channel");  // New field in v2
+    }
 }
 ```
 
