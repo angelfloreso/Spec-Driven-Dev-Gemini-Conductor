@@ -1,0 +1,188 @@
+
+openapi: 3.0.3
+info:
+  title: MedSched API
+  description: API for managing medical appointments, patient onboarding, and schedule control.
+  version: 1.0.0
+  contact:
+    name: Technical Lead Practice
+    email: support@medsched.example.com
+servers:
+  - url: https://api.medsched.example.com/v1
+    description: Production server
+
+paths:
+  /patients:
+    post:
+      summary: Register new patient (FR-01.1)
+      operationId: registerPatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientRegistration'
+      responses:
+        '201':
+          description: Patient registered successfully
+        '409':
+          description: Patient already exists (FR-01.2 - De-duplication)
+
+  /appointments:
+    post:
+      summary: Book appointment (FR-02.1)
+      description: Books a slot and temporarily locks it for 5 minutes to prevent concurrency.
+      operationId: bookAppointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRequest'
+      responses:
+        '201':
+          description: Appointment booked
+        '423':
+          description: Slot locked or unavailable
+
+  /appointments/{appointmentId}/cancel:
+    post:
+      summary: Cancel appointment (FR-02.3)
+      operationId: cancelAppointment
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appointment cancelled, slot released
+
+  /appointments/{appointmentId}:
+    get:
+      summary: Get appointment details (FR-02.5)
+      operationId: getAppointmentById
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appointment details found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentDetails'
+        '404':
+          description: Appointment not found
+
+  /practitioners/{practitionerId}/schedule-blocks:
+    post:
+      summary: Block schedule (FR-02.4)
+      operationId: blockSchedule
+      parameters:
+        - name: practitionerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleBlock'
+      responses:
+        '201':
+          description: Block registered
+
+components:
+  schemas:
+    PatientRegistration:
+      type: object
+      required:
+        - fullName
+        - dob
+        - phone
+        - email
+      properties:
+        fullName:
+          type: string
+          description: Full legal name
+        dob:
+          type: string
+          format: date
+        sex:
+          type: string
+          enum: [M, F, Other]
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        govtIdToken:
+          type: string
+          description: Government ID token for de-duplication (FR-01.2)
+        allergies:
+          type: array
+          items:
+            type: string
+
+    AppointmentRequest:
+      type: object
+      required:
+        - practitionerId
+        - specialty
+        - startTime
+      properties:
+        practitionerId:
+          type: string
+        specialty:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        patientId:
+          type: string
+
+    ScheduleBlock:
+      type: object
+      required:
+        - startTime
+        - endTime
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          description: Example 'Symposium' or 'Absence'
+
+    AppointmentDetails:
+      type: object
+      required:
+        - appointmentId
+        - practitionerId
+        - specialty
+        - startTime
+        - status
+      properties:
+        appointmentId:
+          type: string
+        practitionerId:
+          type: string
+        specialty:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        patientId:
+          type: string
+        status:
+          type: string
+          enum: [BOOKED, CANCELLED, COMPLETED]
