@@ -107,14 +107,84 @@ Expected result:
 
 ## Step 3 - Implement to Match Spec v2
 
-Update:
-- `AppointmentsController#getNextAppointment(...)` to use `memberId` (`String`) query parameter.
-- Service mapping to return the v2 fields:
-  - `memberId`
-  - `practitioner`
-  - `slotStart`
-  - `slotEnd`
-  - `channel`
+Update AppointmentsController.java, SchedulingService.java, and ApiContractTest.java to match the new contract.
+
+AppointmentsController.java
+```java
+package com.immutablebuild.demo.controller;
+
+import com.immutablebuild.demo.api.AppointmentsApi;
+import com.immutablebuild.demo.api.model.NextAppointmentResponse;
+import com.immutablebuild.demo.service.SchedulingService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class AppointmentsController implements AppointmentsApi {
+
+    private final SchedulingService schedulingService;
+
+    public AppointmentsController(SchedulingService schedulingService) {
+        this.schedulingService = schedulingService;
+    }
+
+    @Override
+    public ResponseEntity<NextAppointmentResponse> getNextAppointment(String memberId) {
+        NextAppointmentResponse response = schedulingService.findNextAppointment(memberId);
+        return ResponseEntity.ok(response);
+    }
+}
+```
+
+SchedulingService.java
+
+```java
+package com.immutablebuild.demo.service;
+
+import com.immutablebuild.demo.api.model.NextAppointmentResponse;
+import java.time.LocalDate;
+import org.springframework.stereotype.Service;
+
+@Service
+public class SchedulingService {
+
+    public NextAppointmentResponse findNextAppointment(String memberId) {
+        NextAppointmentResponse response = new NextAppointmentResponse();
+        response.memberId(memberId);
+        response.practitioner("Dr. Alice Gray");
+        response.slotStart("2024-06-15T10:00:00");
+        response.slotEnd("2024-06-15T11:00:00");
+        response.channel("In-person");
+        return response;
+    }
+}
+```
+Why ApiContractTest may need edits:
+
+When the contract changes first, anything validated against that contract must be updated
+
+- The v2 spec makes memberId a required query parameter.
+- Contract validation uses the same OpenAPI file, so tests must send inputs and expect payload shapes that match the updated spec.
+
+ApiContractTest.java
+```java
+@Test
+void endpointResponseMatchesCurrentOpenApiSpec() {
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = port;
+
+    OpenApiValidationFilter contract =
+      new OpenApiValidationFilter("src/main/resources/openapi/api-spec.yaml");
+
+    given()
+      .filter(contract)
+      .queryParam("memberId", "101")
+    .when()
+      .get("/api/appointments/next")
+    .then()
+      .statusCode(200);
+}
+```
 
 Then run:
 
@@ -152,5 +222,3 @@ Expected result:
 5. "Manual drift -> contract tests fail."
 
 ---
-
-If you want, you can extend this by adding a CI pipeline (GitHub Actions) that runs `mvn clean verify` on pull requests.
