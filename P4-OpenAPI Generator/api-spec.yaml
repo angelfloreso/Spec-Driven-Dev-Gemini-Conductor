@@ -28,57 +28,7 @@ paths:
         '409':
           description: Patient already exists (FR-01.2 - De-duplication)
 
-  /appointments:
-    post:
-      summary: Book appointment (FR-02.1)
-      description: Books a slot and temporarily locks it for 5 minutes to prevent concurrency.
-      operationId: bookAppointment
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AppointmentRequest'
-      responses:
-        '201':
-          description: Appointment booked
-        '423':
-          description: Slot locked or unavailable
-
-  /appointments/{appointmentId}/cancel:
-    post:
-      summary: Cancel appointment (FR-02.3)
-      operationId: cancelAppointment
-      parameters:
-        - name: appointmentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Appointment cancelled, slot released
-
-  /appointments/{appointmentId}:
-    get:
-      summary: Get appointment details (FR-02.5)
-      operationId: getAppointmentById
-      parameters:
-        - name: appointmentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Appointment details found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AppointmentDetails'
-        '404':
-          description: Appointment not found
-
+  
   /practitioners/{practitionerId}/schedule-blocks:
     post:
       summary: Block schedule (FR-02.4)
