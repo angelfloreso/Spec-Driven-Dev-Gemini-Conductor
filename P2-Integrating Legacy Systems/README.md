@@ -145,17 +145,6 @@ No value at JSON path "$.practitionerName"
 
 This is expected and desirable in Spec-Driven Development: once the implementation drifts from the contract spec, the build blocks the change.
 
-Optional manual check:
-
-```bash
-# Start producer
-mvn spring-boot:run &
-
-# Try calling the API in another terminal
-curl http://localhost:8080/api/v1/appointments/APT-001
-# Response now missing "practitionerName"!
-```
-
 **Key insight**: the producer-side contract test already catches the break before production.
 
 ---
