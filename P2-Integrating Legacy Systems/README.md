@@ -83,6 +83,10 @@ Both sides honour the v1 contract spec. The build is green.
 Edit `producer/src/main/java/com/legacyintegration/producer/Appointment.java`:
 
 ```java
+package com.legacyintegration.producer;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Appointment {
     @JsonProperty("appointmentId")
     private String appointmentId;
@@ -114,14 +118,27 @@ public class Appointment {
 And update controller:
 
 ```java
-@GetMapping("/appointments/{id}")
-public ResponseEntity<Appointment> getAppointment(@PathVariable("id") String appointmentId) {
-    Appointment appointment = new Appointment(
-            appointmentId,
-            // removed practitionerName from constructor
-            "2026-06-20T10:00:00"
-    );
-    return ResponseEntity.ok(appointment);
+package com.legacyintegration.producer;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1")
+public class SchedulingController {
+
+    @GetMapping("/appointments/{id}")
+    public ResponseEntity<Appointment> getAppointment(@PathVariable("id") String appointmentId) {
+        Appointment appointment = new Appointment(
+                appointmentId,
+                "Dr. Smith",
+                "2026-06-20T10:00:00"
+        );
+        return ResponseEntity.ok(appointment);
+    }
 }
 ```
 
@@ -158,6 +175,10 @@ Revert the Appointment.java to include `practitionerName`, then add a v2 model a
 Create `producer/src/main/java/com/legacyintegration/producer/AppointmentV2.java`:
 
 ```java
+package com.legacyintegration.producer;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class AppointmentV2 {
     @JsonProperty("appointmentId")
     private String appointmentId;
@@ -185,6 +206,14 @@ public class AppointmentV2 {
 Update `SchedulingController` to add v2 endpoint:
 
 ```java
+package com.legacyintegration.producer;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 @RestController
 @RequestMapping("/api")
 public class SchedulingController {
