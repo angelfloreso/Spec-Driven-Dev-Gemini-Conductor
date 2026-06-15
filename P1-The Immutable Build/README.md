@@ -168,22 +168,40 @@ When the contract changes first, anything validated against that contract must b
 
 ApiContractTest.java
 ```java
-@Test
-void endpointResponseMatchesCurrentOpenApiSpec() {
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = port;
+package com.immutablebuild.demo;
 
-    OpenApiValidationFilter contract =
-      new OpenApiValidationFilter("src/main/resources/openapi/api-spec.yaml");
+import static io.restassured.RestAssured.given;
 
-    given()
-      .filter(contract)
-      .queryParam("memberId", "101")
-    .when()
-      .get("/api/appointments/next")
-    .then()
-      .statusCode(200);
+import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
+import io.restassured.RestAssured;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class ApiContractTest {
+
+    @LocalServerPort
+    int port;
+
+    @Test
+        void endpointResponseMatchesCurrentOpenApiSpec() {
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
+
+        OpenApiValidationFilter contract =
+        new OpenApiValidationFilter("src/main/resources/openapi/api-spec.yaml");
+
+        given()
+        .filter(contract)
+        .queryParam("memberId", "101")
+        .when()
+        .get("/api/appointments/next")
+        .then()
+        .statusCode(200);
+        }
 }
+
 ```
 
 Then run:
