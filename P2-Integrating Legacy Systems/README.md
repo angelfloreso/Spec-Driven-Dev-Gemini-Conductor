@@ -134,7 +134,6 @@ public class SchedulingController {
     public ResponseEntity<Appointment> getAppointment(@PathVariable("id") String appointmentId) {
         Appointment appointment = new Appointment(
                 appointmentId,
-                "Dr. Smith",
                 "2026-06-20T10:00:00"
         );
         return ResponseEntity.ok(appointment);
