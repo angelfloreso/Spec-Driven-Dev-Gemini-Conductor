@@ -1,4 +1,4 @@
 Sample Project/backend/.venv/*
 **/__pycache__/*
 Sample Project/frontend/node_modules/*
-P1-The Immutable Build/target/*
+**/target/*

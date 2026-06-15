@@ -132,9 +132,20 @@ cd producer
 mvn clean test
 ```
 
-Expected result: **BUILD SUCCESS** ✓ (producer test only validates what it returns)
+Expected result: **BUILD FAILURE** ❌
 
-The producer test passes because it just verifies the response has those three fields. But now run a manual test:
+Why it fails: `ProducerContractTest` enforces the v1 contract and explicitly expects `practitionerName`.
+
+Example failure:
+
+```text
+[ERROR] ProducerContractTest.shouldReturnAppointmentWithRequiredFields
+No value at JSON path "$.practitionerName"
+```
+
+This is expected and desirable in Spec-Driven Development: once the implementation drifts from the contract spec, the build blocks the change.
+
+Optional manual check:
 
 ```bash
 # Start producer
@@ -145,20 +156,7 @@ curl http://localhost:8080/api/v1/appointments/APT-001
 # Response now missing "practitionerName"!
 ```
 
-**The problem**: Code runs fine, but consumer will fail at deserialization because it expects `practitionerName`.
-
-**How CDC catches this**: Consumer contract tests document the requirement. If you add a real integration test in the consumer that calls the producer API, it will fail:
-
-```java
-@Test
-public void consumerFailsWhenPractitionerNameIsRemoved() {
-    // This would fail because practitionerName is now missing
-    SchedulingClient.AppointmentDTO appointment = client.getAppointment("APT-001");
-    assertThat(appointment.practitionerName).isNotNull(); // FAILS!
-}
-```
-
-**Key insight**: CDC fails the build *before* production when the contract is violated.
+**Key insight**: the producer-side contract test already catches the break before production.
 
 ---
 
