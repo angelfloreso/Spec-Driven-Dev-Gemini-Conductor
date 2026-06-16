@@ -53,44 +53,7 @@ Look for:
 - API interfaces in com.specdrivendev.p4.api
 - model classes in com.specdrivendev.p4.model
 
-## Step 4 - Practice Spec-Driven Change
-
-Edit api-spec.yaml and add a new field to AppointmentRequest, for example:
-
-```yaml
-    AppointmentRequest:
-      type: object
-      required:
-        - practitionerId
-        - specialty
-        - startTime
-        - channel
-      properties:
-        practitionerId:
-          type: string
-        specialty:
-          type: string
-        startTime:
-          type: string
-          format: date-time
-        patientId:
-          type: string
-        channel:
-          type: string
-          enum: [IN_PERSON, VIRTUAL]
-```
-
-Regenerate and rebuild:
-
-```bash
-mvn clean install
-```
-
-What this demonstrates:
-- YAML changes become Java contract changes automatically.
-- implementation must follow generated contract.
-
-## Step 5 - Exercise 2: Add New Endpoint And Implement Generated Interface
+## Step 5 - Exercise: Add New Endpoint And Implement Generated Interface
 
 Update api-spec.yaml to add a new endpoint and response schema:
 
@@ -344,14 +307,6 @@ public class MedSchedApiController implements DefaultApi {
 }
 ```
 
-Now the build should succeed because the controller implements all methods from the generated DefaultApi interface.
-
-1. api-spec.yaml includes a new endpoint:
-  - GET /appointments/{appointmentId}
-2. api-spec.yaml includes a new response schema:
-  - AppointmentDetails
-3. src/main/java/com/p4/openapi/controller/MedSchedApiController.java implements the generated DefaultApi interface.
-
 Run the full flow:
 
 ```bash
@@ -359,13 +314,19 @@ cd "/root/projects/SpecDrivenDev-Conductor/P4-OpenAPI Generator"
 mvn clean install
 ```
 
+Now the build should succeed because the controller implements all methods from the generated DefaultApi interface.
+
+1. api-spec.yaml includes a endpoints:
+2. api-spec.yaml includes a new response schemas:
+3. src/main/java/com/p4/openapi/controller/MedSchedApiController.java implements the generated DefaultApi interface.
+
 Then run the app:
 
 ```bash
 mvn spring-boot:run
 ```
 
-Test the new endpoint:
+Test the new endpoints:
 
 ```bash
 curl http://localhost:8080/appointments/APT-001
