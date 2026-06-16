@@ -1,10 +1,10 @@
-# P6 Tutorial - Reverse Engineering: Generate OpenAPI Spec From Code
+# Tutorial - Reverse Engineering: Generate OpenAPI Spec From Code
 
 This practice teaches **reverse-engineering** — extracting a machine-readable OpenAPI specification from existing Spring Boot code using `springdoc-openapi`.
 
 > **Context in the course**
-> P1–P5 work **spec-first** (write YAML, generate code).
-> P6 works **code-first** (annotate existing code, generate YAML).
+> **spec-first** (write YAML, generate code).
+> **code-first** (annotate existing code, generate YAML).
 > Both directions are real-world skills. Use reverse engineering when you inherit a legacy codebase with no spec.
 
 ---
@@ -22,7 +22,7 @@ This practice teaches **reverse-engineering** — extracting a machine-readable 
 ## Project Structure
 
 ```
-P6-Reverse Engineering/
+P3-Reverse Engineering/
 ├── pom.xml
 ├── src/main/
 │   ├── resources/
@@ -54,7 +54,7 @@ P6-Reverse Engineering/
 ## Step 1 - Build and Start the Application
 
 ```bash
-cd "/root/projects/SpecDrivenDev-Conductor/P6-Reverse Engineering"
+cd "/root/projects/SpecDrivenDev-Conductor/P3-Reverse Engineering"
 mvn clean install
 mvn spring-boot:run
 ```
@@ -241,13 +241,13 @@ Validate at https://editor.swagger.io — paste the YAML content. Errors appear 
 
 ---
 
-## Step 9 - Compare Against P5 Reference Spec
+## Step 9 - Compare Against P4 Reference Spec
 
-The P5 folder contains a hand-crafted spec built from the same requirements:
+The P4 folder contains a hand-crafted spec built from the same requirements:
 
 ```bash
 diff medsched-reverse-engineered.yaml \
-     "../P5-NL Specs/medsched-reference.yaml"
+    "../P4-NL Specs/medsched-reference.yaml"
 ```
 
 This comparison answers: **how closely does reverse engineering match spec-first design?**
@@ -261,7 +261,7 @@ Common gaps you will find:
 
 ## Key Takeaways
 
-| | Code-first (Reverse Engineering) | Spec-first (P1, P4) |
+| | Code-first (Reverse Engineering) | Spec-first |
 |---|---|---|
 | **Starting point** | Existing code | OpenAPI YAML |
 | **Output** | Generated spec | Generated code |

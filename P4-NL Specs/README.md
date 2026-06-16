@@ -1,4 +1,4 @@
-# P5 Tutorial - From Natural Language Specs to OpenAPI YAML
+# P4 Tutorial - From Natural Language Specs to OpenAPI YAML
 
 This practice teaches how to convert a real Functional Requirements Document (FRD) into a machine-readable OpenAPI 3.0 YAML spec using AI assistance.
 
@@ -24,7 +24,7 @@ Spec-Driven Development starts by extracting that intent into a precise, version
 The PDF in this folder is the **MedSched Functional Requirements Document**.
 
 ```
-P5-NL Specs/Functional_Requirements_Document_MedSched.pdf
+P4-NL Specs/Functional_Requirements_Document_MedSched.pdf
 ```
 
 It defines four functional requirement areas:
@@ -94,7 +94,7 @@ Once the AI returns the YAML, save it to this folder:
 
 ```bash
 cp ~/Downloads/your-generated-spec.yaml \
-   "/root/projects/SpecDrivenDev-Conductor/P5-NL Specs/medsched-generated.yaml"
+  "/root/projects/SpecDrivenDev-Conductor/P4-NL Specs/medsched-generated.yaml"
 ```
 
 Then open it in VS Code to review it visually.
@@ -110,7 +110,7 @@ You can also validate it immediately with an online linter:
 A reference YAML built from the same document is provided in this folder:
 
 ```
-P5-NL Specs/medsched-reference.yaml
+P4-NL Specs/medsched-reference.yaml
 ```
 
 Compare your generated spec with the reference:

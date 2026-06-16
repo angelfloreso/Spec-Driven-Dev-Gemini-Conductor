@@ -24,7 +24,7 @@ This practice shows how to use openapi-generator-maven-plugin to generate Spring
 From this folder:
 
 ```bash
-cd "/root/projects/SpecDrivenDev-Conductor/P4-OpenAPI Generator"
+cd "/root/projects/SpecDrivenDev-Conductor/P2-OpenAPI Generator"
 mvn clean generate-sources
 ```
 
@@ -103,7 +103,7 @@ In this repository, the second practice is already prepared for you:
 Run the full flow:
 
 ```bash
-cd "/root/projects/SpecDrivenDev-Conductor/P4-OpenAPI Generator"
+cd "/root/projects/SpecDrivenDev-Conductor/P2-OpenAPI Generator"
 mvn clean install
 ```
 

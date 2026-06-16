@@ -1,4 +1,4 @@
-# P2 - Integrating Legacy Systems: Spec-Driven Development in Practice
+# P5 - Integrating Legacy Systems: Spec-Driven Development in Practice
 
 This workshop extends the Spec-Driven Development principle into legacy system integration using **Consumer-Driven Contracts (CDC)**.
 
@@ -33,7 +33,7 @@ If the producer breaks the contract, the build fails **before** deployment.
   P1 recap (single service):
     OpenAPI YAML  ──►  Generated Spring interfaces  ──►  Controller must implement them
 
-  P2 (across a team boundary):
+    P5 (across a team boundary):
     Consumer Contract  ──►  Producer build verifies against it  ──►  Build fails on drift
 
 ┌──────────────────────────┐         ┌──────────────────────────┐
@@ -298,9 +298,9 @@ Now both v1 and v2 contracts coexist. Producer can provide both versions, and co
 
 ## Key Takeaways
 
-### Spec-Driven Development — the common thread across P1 and P2
+### Spec-Driven Development — the common thread across P1 and P5
 
-| | P1 - Immutable Build | P2 - Legacy Integration |
+| | P1 - Immutable Build | P5 - Legacy Integration |
 |---|---|---|
 | **Spec format** | OpenAPI YAML | Consumer Contract (test) |
 | **Who writes the spec** | API designer | Consumer team |

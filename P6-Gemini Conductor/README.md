@@ -1,4 +1,4 @@
-# P3 Tutorial - Learn Gemini Conductor Step by Step
+# P6 Tutorial - Learn Gemini Conductor Step by Step
 
 This tutorial is designed for beginners. Follow it in order and you will learn how to use Gemini Conductor on a real project.
 
@@ -31,7 +31,7 @@ This folder contains a complete sample application:
 ## Step 1 - Open the Project
 
 ```bash
-cd "/root/projects/SpecDrivenDev-Conductor/P3-Gemini Conductor"
+cd "/root/projects/SpecDrivenDev-Conductor/P6-Gemini Conductor"
 ls
 ```
 
@@ -84,7 +84,7 @@ Expected result:
 ## Step 5 - Launch Gemini In This Project
 
 ```bash
-cd "/root/projects/SpecDrivenDev-Conductor/P3-Gemini Conductor"
+cd "/root/projects/SpecDrivenDev-Conductor/P6-Gemini Conductor"
 gemini
 ```
 
