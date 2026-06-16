@@ -1,0 +1,431 @@
+openapi: 3.0.3
+info:
+  title: MedSched API
+  description: >
+    Full API specification for the Medical Appointment Management System (MedSched).
+    Generated from the Functional Requirements Document.
+    Covers FR-01 (Patient Onboarding), FR-02 (Booking Engine),
+    FR-03 (Notifications), FR-04 (Waiting Room & Queue).
+  version: 1.0.0
+  contact:
+    name: Technical Lead Practice
+    email: support@medsched.example.com
+servers:
+  - url: https://api.medsched.example.com/v1
+    description: Production server
+
+paths:
+
+  # ── FR-01 Patient Onboarding ─────────────────────────────────────────────
+
+  /patients:
+    post:
+      summary: Register a new patient (FR-01.1)
+      description: >
+        Registers a new patient. If a patient with matching govtIdToken
+        already exists, the request is rejected with 409 (FR-01.2 de-duplication).
+      operationId: registerPatient
+      tags:
+        - patients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientRegistration'
+      responses:
+        '201':
+          description: Patient registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientCreated'
+        '400':
+          description: Validation error – required fields missing or malformed
+        '409':
+          description: Patient already exists (de-duplication conflict)
+
+  /patients/{patientId}:
+    get:
+      summary: Get patient record (FR-01.3)
+      operationId: getPatientById
+      tags:
+        - patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient record found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientRecord'
+        '404':
+          description: Patient not found
+
+  # ── FR-02 Booking Engine ─────────────────────────────────────────────────
+
+  /appointments:
+    post:
+      summary: Book an appointment (FR-02.1)
+      description: >
+        Books a slot and holds it for 5 minutes to prevent double-booking
+        concurrency. Returns 423 if the slot is already locked.
+      operationId: bookAppointment
+      tags:
+        - appointments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRequest'
+      responses:
+        '201':
+          description: Appointment booked and slot locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentCreated'
+        '400':
+          description: Validation error
+        '423':
+          description: Slot locked or unavailable
+
+  /appointments/{appointmentId}:
+    get:
+      summary: Get appointment details (FR-02.5)
+      operationId: getAppointmentById
+      tags:
+        - appointments
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appointment found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentDetails'
+        '404':
+          description: Appointment not found
+
+  /appointments/{appointmentId}/cancel:
+    post:
+      summary: Cancel an appointment (FR-02.3)
+      description: Cancels the appointment and releases the slot immediately.
+      operationId: cancelAppointment
+      tags:
+        - appointments
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appointment cancelled, slot released
+        '404':
+          description: Appointment not found
+        '409':
+          description: Appointment already cancelled or completed
+
+  /appointments/{appointmentId}/reschedule:
+    post:
+      summary: Reschedule an appointment (FR-02.3)
+      description: >
+        Cancels the current slot, acquires a new slot lock,
+        and confirms the rescheduled appointment atomically.
+      operationId: rescheduleAppointment
+      tags:
+        - appointments
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RescheduleRequest'
+      responses:
+        '200':
+          description: Appointment rescheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentDetails'
+        '404':
+          description: Appointment not found
+        '423':
+          description: New slot locked or unavailable
+
+  /appointments/{appointmentId}/status:
+    patch:
+      summary: Update appointment lifecycle status (FR-04.1)
+      description: >
+        Transitions the appointment status (e.g., CHECKED_IN → WITH_DOCTOR → DISCHARGED).
+        Used by practitioners and receptionists.
+      operationId: updateAppointmentStatus
+      tags:
+        - appointments
+        - queue
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdate'
+      responses:
+        '200':
+          description: Status updated
+        '400':
+          description: Invalid status transition
+        '404':
+          description: Appointment not found
+
+  /practitioners/{practitionerId}/schedule-blocks:
+    post:
+      summary: Block practitioner schedule (FR-02.4)
+      description: Registers a calendar block (e.g., symposium, absence) for a practitioner.
+      operationId: blockSchedule
+      tags:
+        - practitioners
+      parameters:
+        - name: practitionerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleBlock'
+      responses:
+        '201':
+          description: Block registered
+        '404':
+          description: Practitioner not found
+
+  /practitioners/{practitionerId}/queue:
+    get:
+      summary: Get practitioner's waiting room queue (FR-04.2)
+      description: Returns the ordered list of today's appointments for a practitioner.
+      operationId: getPractitionerQueue
+      tags:
+        - practitioners
+        - queue
+      parameters:
+        - name: practitionerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Queue returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentDetails'
+        '404':
+          description: Practitioner not found
+
+  # ── FR-03 Notifications & Reminders ──────────────────────────────────────
+
+  /reminders/dispatch:
+    post:
+      summary: Dispatch appointment reminders (FR-03.1)
+      description: >
+        Triggers reminder dispatch for upcoming appointments.
+        Dispatches via simulated email/SMS. Idempotent within a dispatch window.
+      operationId: dispatchReminders
+      tags:
+        - reminders
+      responses:
+        '200':
+          description: Reminders dispatched
+
+  /reminders/ack/{token}:
+    get:
+      summary: Acknowledge a reminder (FR-03.2)
+      description: Called when a patient clicks the reminder confirmation link.
+      operationId: acknowledgeReminder
+      tags:
+        - reminders
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reminder acknowledged
+        '404':
+          description: Token not found or expired
+
+# ── Components ───────────────────────────────────────────────────────────────
+
+components:
+  schemas:
+
+    PatientRegistration:
+      type: object
+      required:
+        - fullName
+        - dob
+        - phone
+        - email
+      properties:
+        fullName:
+          type: string
+          description: Legal full name
+        dob:
+          type: string
+          format: date
+          description: Date of birth
+        sex:
+          type: string
+          enum: [M, F, Other]
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        govtIdToken:
+          type: string
+          description: Government identity token used for de-duplication (FR-01.2)
+        allergies:
+          type: array
+          items:
+            type: string
+
+    PatientCreated:
+      type: object
+      required:
+        - patientId
+      properties:
+        patientId:
+          type: string
+
+    PatientRecord:
+      allOf:
+        - $ref: '#/components/schemas/PatientRegistration'
+        - type: object
+          required:
+            - patientId
+          properties:
+            patientId:
+              type: string
+
+    AppointmentRequest:
+      type: object
+      required:
+        - practitionerId
+        - specialty
+        - startTime
+      properties:
+        practitionerId:
+          type: string
+        specialty:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        patientId:
+          type: string
+        channel:
+          type: string
+          enum: [IN_PERSON, VIRTUAL]
+
+    AppointmentCreated:
+      type: object
+      required:
+        - appointmentId
+      properties:
+        appointmentId:
+          type: string
+
+    AppointmentDetails:
+      type: object
+      required:
+        - appointmentId
+        - practitionerId
+        - specialty
+        - startTime
+        - status
+      properties:
+        appointmentId:
+          type: string
+        practitionerId:
+          type: string
+        patientId:
+          type: string
+        specialty:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        channel:
+          type: string
+          enum: [IN_PERSON, VIRTUAL]
+        status:
+          type: string
+          enum: [BOOKED, CHECKED_IN, WITH_DOCTOR, DISCHARGED, CANCELLED, COMPLETED]
+
+    RescheduleRequest:
+      type: object
+      required:
+        - newStartTime
+      properties:
+        newStartTime:
+          type: string
+          format: date-time
+
+    StatusUpdate:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [CHECKED_IN, WITH_DOCTOR, DISCHARGED, COMPLETED, CANCELLED]
+
+    ScheduleBlock:
+      type: object
+      required:
+        - startTime
+        - endTime
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          description: e.g. "Symposium" or "Absence"
